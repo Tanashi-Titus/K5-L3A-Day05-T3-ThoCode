@@ -4,14 +4,16 @@
 
 | Họ và tên | Mã học viên | Việc đã làm |
 |---|---|---|
-| Nguyễn Tuấn Dũng | 2A202603559 | Nhóm xác nhận |
+| Nguyễn Tuấn Dũng | 2A202603559 | Lát cắt, phạm vi, Kịch bản rủi ro |
 | Nguyễn Đức Minh | 2A202603633 | Nhóm xác nhận |
 | Phạm Đức Hồng Đức | 2A202603558 | Nhóm xác nhận |
 | Giáp Mạnh Tuyên | 2A202603648 | Nhóm xác nhận |
 
 ## §1. Lát cắt & phạm vi
 
-**Lát cắt:** Hoàn tiền (Traveloka): **Hoàn tiền & Đổi lịch → Hoàn tiền → đọc chính sách → chọn lý do và hành khách → gửi yêu cầu**. Theo hướng dẫn công khai, yêu cầu hoàn tiền đã gửi thì không thể huỷ; thời gian xử lý có thể lên tới 90 ngày; tiền thường được trả về phương thức thanh toán ban đầu, nhưng một số trường hợp được hoàn bằng voucher.
+**Lát cắt:** Trong **Đặt chỗ của tôi**, khi **hành khách** vừa nhận tin chuyến bay bị huỷ và nhắn hỏi, **AI đề xuất và giữ chỗ chuyến thay thế, hỏi lại cho rõ, đổi vé, hay chuyển nhân viên**, để khách tới nơi kịp mà không mất vé hay tiền vì một thao tác không đảo lại được.
+
+Luồng Hoàn tiền & Đổi lịch của Traveloka là nguồn tham khảo cho cách sản phẩm vận hành hôm nay. Dữ liệu quyết định trong prototype lấy từ đặt chỗ dựng TRV-7Q2K và chính sách hãng Bay Mẫu; không suy diễn mốc hoàn tiền hoặc phương thức nhận tiền của hồ sơ này từ tài liệu Traveloka.
 
 **Ba việc sản phẩm không làm:**
 
