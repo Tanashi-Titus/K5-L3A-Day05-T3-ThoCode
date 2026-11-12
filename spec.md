@@ -9,14 +9,9 @@
 | Phạm Đức Hồng Đức | 2A202603558 | Nhóm xác nhận |
 | Giáp Mạnh Tuyên | 2A202603648 | Nhóm xác nhận |
 
+## §1. Lát cắt & phạm vi
 
-## §1. Lát cắt và phạm vi
-
-> Trong **Đặt chỗ của tôi**, khi **hành khách** vừa nhận tin chuyến bay bị huỷ và nhắn hỏi, **AI đề xuất và giữ chỗ chuyến thay thế, hỏi lại cho rõ, đổi vé, hay chuyển nhân viên**, để khách tới nơi kịp mà không mất vé hay tiền vì một thao tác không đảo lại được.
-
-RefundGuard AI tập trung vào hai ca của CP3: ngăn gửi hoàn trước khi khách xác nhận, và xử lý việc khách đổi ý sau khi yêu cầu hoàn đã gửi. Dữ liệu nền là đặt chỗ dựng TRV-7Q2K, hai hành khách, chuyến BM 213 Hà Nội → TP.HCM bị hủy do bão. Hãng Bay Mẫu cho đổi miễn phí một lần trong 48 giờ hoặc hoàn toàn bộ. Hủy do thời tiết không được bồi thường tiền mặt.
-
-Luồng Hoàn tiền & Đổi lịch của Traveloka là tham khảo. Mốc tối đa 90 ngày, phương thức thanh toán ban đầu hoặc voucher trong tài liệu tham khảo không được dùng để suy ra kết quả của đặt chỗ Bay Mẫu.
+**Lát cắt:** Hoàn tiền (Traveloka): **Hoàn tiền & Đổi lịch → Hoàn tiền → đọc chính sách → chọn lý do và hành khách → gửi yêu cầu**. Theo hướng dẫn công khai, yêu cầu hoàn tiền đã gửi thì không thể huỷ; thời gian xử lý có thể lên tới 90 ngày; tiền thường được trả về phương thức thanh toán ban đầu, nhưng một số trường hợp được hoàn bằng voucher.
 
 **Ba việc sản phẩm không làm:**
 
@@ -133,7 +128,7 @@ Lựa chọn và xác nhận chỉ có hiệu lực với người có quyền x
 
 ## §5. Prototype
 
-Mở [prototype/index.html](prototype/index.html). Hai nút demo mở **S1 · Yêu cầu hoàn vé** và **S2 · Đổi ý sau khi gửi**. S2 bắt đầu từ hồ sơ mô phỏng đã gửi cho cả hai. Trong S1 cũng có thể đi qua xác nhận gửi rồi bấm đổi ý để đến cùng nhánh phục hồi. Bố cục tham khảo mẫu giảng viên: đặt chỗ và hội thoại bên trái, lời hứa, mức tự chủ và chú thích HAX bên phải. Prototype HTML/CSS/JavaScript chỉ mô phỏng dữ liệu, giao dịch và chuyển nhân viên. Nhánh xem chuyến thay thế cho phép thử chọn chuyến và duyệt đổi; giữ chỗ chỉ được mô tả trong thiết kế.
+Mở [prototype/index.html](prototype/index.html). **S1 · Yêu cầu hoàn vé** và **S2 · Đổi ý sau khi gửi** là hai ca chính. S2 bắt đầu từ hồ sơ mô phỏng đã gửi cho cả hai. Trong S1 cũng có thể đi qua xác nhận gửi rồi bấm đổi ý để đến cùng nhánh phục hồi. **S5 · Xác nhận mơ hồ** là lượt demo bổ sung cho câu “Ừ, làm đi”. Bố cục tham khảo mẫu giảng viên, với đặt chỗ và hội thoại bên trái, lời hứa, mức tự chủ và chú thích HAX bên phải. Prototype HTML/CSS/JavaScript dùng tình huống dựng sẵn, không nhận tin nhắn tự do hoặc gọi AI thật. Nhánh xem chuyến thay thế cho phép thử chọn chuyến và duyệt đổi. Giữ chỗ chỉ được mô tả trong thiết kế.
 
 **Dữ liệu dựng bổ sung cho demo:** Bản xem trước hiện “Chưa xác minh” vì đề không có giá từng vé. Bước xác nhận mô phỏng hồ sơ đã đối soát: giá An 1.400.000 ₫, Bình 1.080.000 ₫, hoàn về phương thức thanh toán gốc trong tối đa 15 ngày làm việc. Các giá trị này chỉ dùng để thử giao diện. Hệ thống thật phải xác minh trước khi bật gửi.
 
@@ -154,16 +149,23 @@ Mở [prototype/index.html](prototype/index.html). Hai nút demo mở **S1 · Y�
 
 ## §6. Tiêu chí Pass/Fail
 
-| Tiêu chí | Pass | Fail |
-|---|---|---|
-| S1 · Chặn gửi trước phê duyệt | Mở ở trạng thái chưa gửi. Nút gửi chỉ mở sau khi chọn người và chấp nhận cảnh báo. Thay đổi người hoặc hết hạn làm mất xác nhận cũ. | Gửi từ câu yêu cầu ban đầu hoặc dùng lại xác nhận. |
-| S1 và S2 · Báo đúng trạng thái | Hiện số tiền chưa xác minh khi thiếu dữ liệu. Chỉ báo “Đã gửi” theo trạng thái tiếp nhận mô phỏng, không khẳng định tiền đã về. | Bịa số tiền, báo đã hoàn tiền hoặc đã hủy yêu cầu. |
-| S2 · Phục hồi an toàn | Giữ trạng thái đã gửi, không cho tự đổi hoặc hủy, có nút chuyển nhân viên và báo kết quả chuyển. | Cho đổi hoặc hứa khôi phục vé khi chưa xác minh. |
+| Tiêu chí | Pass | Fail | Kết quả chạy thử |
+|---|---|---|---|
+| S1 · Chặn gửi trước phê duyệt | Nút gửi chỉ mở sau khi chọn người và chấp nhận cảnh báo. Thay đổi người hoặc hết hạn làm mất xác nhận cũ. | Gửi từ câu yêu cầu ban đầu hoặc dùng lại xác nhận. | **PASS.** Chọn thêm hành khách xóa xác nhận cũ. Tua đồng hồ trình duyệt qua 5 phút làm nút gửi bị khóa và màn hình báo hết hạn. |
+| S1 và S2 · Báo đúng trạng thái | Hiện số tiền chưa xác minh khi thiếu dữ liệu. Chỉ báo “Đã gửi” theo trạng thái tiếp nhận mô phỏng. | Bịa số tiền, báo đã hoàn tiền hoặc đã hủy yêu cầu. | **PASS cả hai.** S1 hiện “Chưa xác minh” và “Chưa gửi yêu cầu” khi xem trước. Khi gửi mô phỏng, hồ sơ hiện đúng hai người đã chọn. S2 giữ “Đã gửi yêu cầu” sau khi khách đổi ý. |
+| S2 · Phục hồi an toàn | Giữ trạng thái đã gửi, không cho tự đổi hoặc hủy, có nút chuyển nhân viên và báo kết quả chuyển. | Cho đổi hoặc hứa khôi phục vé khi chưa xác minh. | **PASS.** Không hiện nút đổi hay hủy. Bấm chuyển nhân viên hiện xác nhận chuyển, còn trạng thái hoàn giữ nguyên. |
 
-Kiểm tra trên prototype với hồ sơ dựng. Còn cần kiểm tra trên hệ thống thật cách xử lý mạng gián đoạn, trạng thái giao dịch đến muộn và tranh chỗ đồng thời.
+**S5 cũng PASS ở lượt chạy thử bổ sung.** Sau “Ừ, làm đi”, trợ lý hỏi lại và trạng thái vẫn là “Chưa thực hiện”. Chọn hoàn mở bước duyệt với nút gửi khóa. Chọn xem chuyến mở danh sách chuyến, chưa đổi vé.
+
+Kết quả trên đo hành vi prototype với hồ sơ dựng trong Chromium. Còn cần kiểm tra trên hệ thống thật cách xử lý mạng gián đoạn, trạng thái giao dịch đến muộn và tranh chỗ đồng thời.
 
 ## §7. Demo
 
-1. Mở **S1**. Đọc câu yêu cầu hoàn cho hai mẹ con. Chỉ ra trạng thái chưa gửi và số tiền chưa xác minh. Mở bước xác nhận, chọn hai người, thử gửi khi chưa chấp nhận cảnh báo, rồi xác nhận để mô phỏng gửi.
-2. Bấm “Không hoàn nữa, tôi muốn đổi chuyến” hoặc mở trực tiếp **S2**. Chỉ ra vì sao AI không tự đổi sang BM 201 sau khi đã gửi hoàn. Bấm chuyển nhân viên, xem phản hồi và kiểm tra trạng thái hoàn giữ nguyên.
-3. Mỗi người trình bày phần thực tế đã làm. Khi nhận ca lạ tại buổi demo, ghi câu khách, hành vi của prototype và thay đổi nhóm đề xuất. *Chưa có ca lạ thực tế để ghi.*
+**Kịch bản trình bày (khoảng 3 phút)**
+
+1. **S5 · 30 giây.** Mở ca và bấm `Nhắn “Ừ, làm đi”`. Đọc câu hỏi lại “Bạn muốn hoàn vé hay đổi chuyến?” và chỉ vào trạng thái `Chưa thực hiện`. Câu trả lời của khách chưa chỉ ra hành động nào.
+2. **S1 · 60 giây.** Mở S1 và chỉ ra số tiền `Chưa xác minh`. Bấm `Xem bước xác nhận hoàn`, chọn một người và tích xác nhận, rồi chọn thêm người thứ hai để cho thấy xác nhận cũ bị xóa. Tích lại rồi bấm `Gửi yêu cầu hoàn`. Chỉ ra trạng thái `Đã gửi yêu cầu` và danh sách hai người.
+3. **S2 · 60 giây.** Bấm `Không hoàn nữa, tôi muốn đổi chuyến` từ S1 hoặc mở S2 trên thanh demo. Chỉ ra cảnh báo không thể hủy và lý do trợ lý chưa tự đổi sang BM 201. Bấm `Chuyển nhân viên`, xem xác nhận chuyển và chỉ ra trạng thái hoàn vẫn giữ nguyên.
+4. **Kết quả · 30 giây.** Tóm tắt S1 chặn gửi sớm, S2 giữ đúng trạng thái và S5 hỏi lại. Chia phần trình bày theo việc mỗi thành viên thực tế đã làm.
+
+**Ca lạ tại buổi demo:** Ghi nguyên văn tình huống được giao, dữ liệu và tool liên quan, prototype đã xử lý được tới đâu, và nhóm có muốn sửa gì. Nếu tình huống nằm ngoài các nút mô phỏng, mô tả cách xử lý theo §4 và ghi rõ phần nào được trình diễn, phần nào chỉ giải thích. *Chưa có ca lạ thực tế để ghi.*

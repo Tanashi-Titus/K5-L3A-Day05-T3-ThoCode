@@ -89,6 +89,7 @@
     <div class="actions demo-controls" aria-label="Chọn ca demo">
       <button id="demo-refund" type="button" aria-pressed="true">S1 · Yêu cầu hoàn vé</button>
       <button id="demo-recovery" type="button" aria-pressed="false">S2 · Đổi ý sau khi gửi</button>
+      <button id="demo-ambiguous" type="button" aria-pressed="false">S5 · Xác nhận mơ hồ</button>
       <button id="demo-reset" type="button">Bắt đầu lại</button>
     </div>
     <div class="grid">
@@ -104,6 +105,19 @@
         </dl>
       </div>
         <div class="panel-head"><h2>Trợ lý đặt chỗ</h2><span class="badge draft" id="status" role="status">Chưa gửi yêu cầu</span></div>
+
+        <section id="ambiguous" aria-label="Xác nhận mơ hồ" hidden>
+          <p class="reply">Mình có thể giúp bạn xem chuyến thay thế hoặc chuẩn bị hoàn vé. Bạn muốn chọn cách nào?</p>
+          <div class="actions"><button id="send-ambiguous" type="button">Nhắn “Ừ, làm đi”</button></div>
+          <div id="clarification" hidden>
+            <p class="message">Ừ, làm đi.</p>
+            <p class="reply" id="clarification-reply" data-note="7" tabindex="-1">Bạn muốn hoàn vé hay đổi chuyến? Mình chưa gửi yêu cầu hoàn và chưa đổi vé.</p>
+            <div class="actions">
+              <button id="clarify-refund" type="button">Chọn hoàn vé</button>
+              <button id="clarify-change" type="button">Xem chuyến thay thế</button>
+            </div>
+          </div>
+        </section>
 
         <section id="preview" aria-label="Xem trước tiền hoàn">
           <p class="message">Chuyến hủy rồi, hoàn vé hai mẹ con giúp tôi.</p>
@@ -186,6 +200,9 @@
     </div>
   </main>
   <script>
+    const ambiguous = document.querySelector('#ambiguous');
+    const sendAmbiguous = document.querySelector('#send-ambiguous');
+    const clarification = document.querySelector('#clarification');
     const preview = document.querySelector('#preview');
     const review = document.querySelector('#review');
     const travelers = [...review.querySelectorAll('[name=passenger]')];
@@ -205,6 +222,7 @@
     const handoff = document.querySelector('#handoff');
     const demoRefund = document.querySelector('#demo-refund');
     const demoRecovery = document.querySelector('#demo-recovery');
+    const demoAmbiguous = document.querySelector('#demo-ambiguous');
     const showNotes = document.querySelector('#show-notes');
     const reviewDuration = 5 * 60 * 1000;
     const demoPrices = [1_400_000, 1_080_000];
@@ -215,24 +233,38 @@
     let changeExpiresAt = 0;
     let completed = false;
     let activeDemo = 'refund';
+    const demoNotes = {
+      refund: {
+        promise: 'Mình có thể xem chính sách hoàn và chuẩn bị yêu cầu. Chỉ gửi khi bạn xác nhận.',
+        first: 1,
+        captions: ['G11 · Nguồn chính sách và số tiền chưa xác minh.', 'G9 · Tách xem trước khỏi gửi và cho đổi hướng.', 'G16 · Cảnh báo không thể hủy trước khi gửi.']
+      },
+      recovery: {
+        promise: 'Mình báo đúng trạng thái đã gửi và chuyển hồ sơ nếu bạn cần nhân viên kiểm tra.',
+        first: 4,
+        captions: ['G11 · Trạng thái từ xác nhận tiếp nhận.', 'G10 · Dừng đổi khi chưa rõ vé còn hợp lệ.', 'G9 · Chuyển hồ sơ để nhân viên hỗ trợ.']
+      },
+      ambiguous: {
+        promise: 'Mình sẽ hỏi bạn muốn làm gì trước khi chuẩn bị yêu cầu hoàn hoặc đổi vé.',
+        first: 7,
+        captions: ['G10 · Hỏi rõ hành động trước khi thực hiện.']
+      },
+      change: {
+        promise: 'Mình tìm chuyến đủ chỗ cho cả hai. Chỉ đổi sang chuyến bạn xác nhận.',
+        first: 4,
+        captions: ['G10 · Hỏi khách chọn chuyến đủ chỗ.', 'G11 · Hiện chuyến và hành khách sẽ đổi.', 'G16 · Nêu việc dùng lượt đổi miễn phí.']
+      }
+    };
 
     function describeDemo(mode) {
       if (mode !== 'change') activeDemo = mode;
-      const refund = mode === 'refund';
-      demoRefund.setAttribute('aria-pressed', String(refund));
+      const { promise, first, captions } = demoNotes[mode];
+      demoRefund.setAttribute('aria-pressed', String(mode === 'refund'));
       demoRecovery.setAttribute('aria-pressed', String(mode === 'recovery'));
-      document.querySelector('#promise').textContent = refund
-        ? 'Mình có thể xem chính sách hoàn và chuẩn bị yêu cầu. Chỉ gửi khi bạn xác nhận.'
-        : mode === 'recovery'
-          ? 'Mình báo đúng trạng thái đã gửi và chuyển hồ sơ nếu bạn cần nhân viên kiểm tra.'
-          : 'Mình tìm chuyến đủ chỗ cho cả hai. Chỉ đổi sang chuyến bạn xác nhận.';
-      const captions = refund
-        ? ['G11 · Nguồn chính sách và số tiền chưa xác minh.', 'G9 · Tách xem trước khỏi gửi và cho đổi hướng.', 'G16 · Cảnh báo không thể hủy trước khi gửi.']
-        : mode === 'recovery'
-          ? ['G11 · Trạng thái từ xác nhận tiếp nhận.', 'G10 · Dừng đổi khi chưa rõ vé còn hợp lệ.', 'G9 · Chuyển hồ sơ để nhân viên hỗ trợ.']
-          : ['G10 · Hỏi khách chọn chuyến đủ chỗ.', 'G11 · Hiện chuyến và hành khách sẽ đổi.', 'G16 · Nêu việc dùng lượt đổi miễn phí.'];
+      demoAmbiguous.setAttribute('aria-pressed', String(mode === 'ambiguous'));
+      document.querySelector('#promise').textContent = promise;
       const list = document.querySelector('#annotation-list');
-      list.start = refund ? 1 : 4;
+      list.start = first;
       list.replaceChildren(...captions.map(caption => {
         const item = document.createElement('li');
         item.textContent = caption;
@@ -281,16 +313,29 @@
       changeMind.focus();
     });
 
-    document.querySelector('#review-refund').addEventListener('click', () => {
+    function openRefundReview() {
+      ambiguous.hidden = true;
       preview.hidden = true;
+      expired.hidden = true;
       review.hidden = false;
+      status.textContent = 'Chưa gửi yêu cầu';
       travelers[0].focus();
+    }
+
+    document.querySelector('#review-refund').addEventListener('click', openRefundReview);
+    document.querySelector('#clarify-refund').addEventListener('click', openRefundReview);
+    document.querySelector('#clarify-change').addEventListener('click', openFlights);
+    sendAmbiguous.addEventListener('click', () => {
+      sendAmbiguous.hidden = true;
+      clarification.hidden = false;
+      document.querySelector('#clarification-reply').focus();
     });
 
     function showPreview() {
       describeDemo('refund');
       clearReview();
       expired.hidden = true;
+      ambiguous.hidden = true;
       review.hidden = true;
       flights.hidden = true;
       preview.hidden = false;
@@ -302,6 +347,7 @@
       describeDemo('change');
       clearReview();
       expired.hidden = true;
+      ambiguous.hidden = true;
       preview.hidden = true;
       review.hidden = true;
       flights.reset();
@@ -376,6 +422,7 @@
       completed = true;
       clearReview();
       review.hidden = true;
+      ambiguous.hidden = true;
       preview.hidden = true;
       flights.hidden = true;
       document.querySelector('#submitted-passengers').textContent = passengers.join(' · ');
@@ -401,6 +448,7 @@
     function startDemo(mode) {
       completed = false;
       resetChangeReview();
+      ambiguous.hidden = true;
       status.classList.replace('sent', 'draft');
       afterSubmit.hidden = true;
       changeMind.hidden = false;
@@ -409,7 +457,18 @@
       document.querySelector('#changed').hidden = true;
       handoff.disabled = false;
       if (mode === 'refund') showPreview();
-      else {
+      else if (mode === 'ambiguous') {
+        describeDemo('ambiguous');
+        clearReview();
+        preview.hidden = true;
+        review.hidden = true;
+        flights.hidden = true;
+        clarification.hidden = true;
+        sendAmbiguous.hidden = false;
+        ambiguous.hidden = false;
+        status.textContent = 'Chưa thực hiện';
+        sendAmbiguous.focus();
+      } else {
         showReceipt(travelers.map(traveler => traveler.value));
         showRecovery();
       }
@@ -417,6 +476,7 @@
 
     demoRefund.addEventListener('click', () => startDemo('refund'));
     demoRecovery.addEventListener('click', () => startDemo('recovery'));
+    demoAmbiguous.addEventListener('click', () => startDemo('ambiguous'));
     document.querySelector('#demo-reset').addEventListener('click', () => startDemo(activeDemo));
     describeDemo('refund');
     document.querySelectorAll('[data-note]').forEach(element => {
