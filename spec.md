@@ -7,7 +7,7 @@
 | Nguyễn Tuấn Dũng | 2A202603559 | Lát cắt, phạm vi, Kịch bản rủi ro |
 | Nguyễn Đức Minh | 2A202603633 | Thiết kế UX xử lý lỗi AI và áp dụng HAX/PAIR. |
 | Phạm Đức Hồng Đức | 2A202603558 | hoàn thành **chặng 5** và **chặng 6**. Nội dung : Hoàn thiện prototype S1/S2 ; bổ sung xử lý dữ liệu thiếu, gửi hoàn thất bại/mất phản hồi và chuyển nhân viên; biên soạn §5, xây dựng tiêu chí Pass/Fail §6.|
-| Giáp Mạnh Tuyên | 2A202603648 | Nhóm xác nhận |
+| Giáp Mạnh Tuyên | 2A202603648 | Xây dựng nội dung mức tự chủ và chốt xác nhận tại §4; dựng phiên bản đầu prototype S1/S2; chạy thử và ghi lại kết quả S1/S2, cập nhật ảnh minh họa và kịch bản demo. |
 
 ## §1. Lát cắt & phạm vi
 
