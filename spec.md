@@ -5,7 +5,7 @@
 | Họ và tên | Mã học viên | Việc đã làm |
 |---|---|---|
 | Nguyễn Tuấn Dũng | 2A202603559 | Lát cắt, phạm vi, Kịch bản rủi ro |
-| Nguyễn Đức Minh | 2A202603633 | Nhóm xác nhận |
+| Nguyễn Đức Minh | 2A202603633 | Thiết kế UX xử lý lỗi AI và áp dụng HAX/PAIR. |
 | Phạm Đức Hồng Đức | 2A202603558 | Nhóm xác nhận |
 | Giáp Mạnh Tuyên | 2A202603648 | Nhóm xác nhận |
 
