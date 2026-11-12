@@ -261,11 +261,12 @@
       if (handoffDone) return;
       const result = mockTool('chuyen_nhan_vien', {
         booking: 'TRV-7Q2K',
-        passengers: travelers.map(person => person.value),
+        bookingPassengers: travelers.map(person => person.value),
+        refundPassengers: refundRecord ? refundRecord.passengers : travelers.filter(person => person.checked).map(person => person.value),
         refund: refundRecord,
         refundState,
         reason: refundState === 'draft' ? 'Xác minh tiền, nơi nhận và thời gian hoàn' : 'Khách đổi ý / cần xác minh trạng thái hoàn',
-        newRequest: refundState === 'submitted' ? 'BM 201 · 07:00, 13/11/2026 · 2 hành khách' : null
+        newRequest: refundState === 'submitted' && !document.querySelector('#recovery').hidden ? 'BM 201 · 07:00, 13/11/2026 · 2 hành khách' : null
       }, { status: mockHandoff.value, caseId: mockHandoff.value === 'accepted' ? 'HT-DEMO-001' : null });
       handoffDone = result.status === 'accepted';
       handoff.disabled = handoffDone;
