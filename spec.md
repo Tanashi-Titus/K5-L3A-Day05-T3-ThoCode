@@ -40,13 +40,67 @@
 - **Chọn S2:** Sau khi yêu cầu hoàn đã được gửi, AI còn có thể tuyên bố sai rằng yêu cầu đã bị huỷ hoặc tự gọi `doi_chuyen_bay`. Lỗi này vừa che giấu trạng thái thật, vừa có nguy cơ tạo thêm thay đổi trên một đặt chỗ chưa rõ còn hợp lệ hay không. Vì không có `huy_hoan_ve`, sản phẩm không thể tự khôi phục tình trạng ban đầu; cần chuyển nhân viên ngay.
 - **S5 là kịch bản suýt được chọn:** câu “Ừ, làm đi” có thể khiến AI chọn nhầm giữa đổi chuyến và hoàn vé, nên mức hại tiềm năng cũng không chấp nhận được. Tuy nhiên, S5 xảy ra **trước** khi tool thay đổi trạng thái được gọi và có thể được chặn hoàn toàn bằng một câu hỏi xác nhận rõ hành động và hành khách. Vì vậy, nhóm ưu tiên S1 và S2, nơi hậu quả đã hoặc sắp trở thành không thể đảo ngược.
 
-## §3. Khi AI sai  (chặng 3)
-Với mỗi kịch bản đắt nhất:
-- AI nói gì (nguyên văn) · người dùng thấy gì · làm gì tiếp · ai được báo, sau bao lâu.
-- Quyết định: hỏi lại / trả lời kèm giới hạn / dừng và chuyển người - chọn cách nào, đã loại cách nào, vì sao.
-- Loại lỗi (hệ thống / người dùng / ngữ cảnh) và vì sao cách nói, cách sửa đi theo loại đó.
-- 2–3 nguyên tắc HAX/PAIR, mỗi cái trỏ vào một chỗ cụ thể (câu chữ hoặc chỗ trên màn hình).
-- Lỗi nào sửa câu chữ không cứu được (nếu có), và thiết kế cứu nó thế nào.
+## §3. Khi AI sai (chặng 3)
+
+### S1 — AI gửi yêu cầu hoàn vé trước khi khách xác nhận
+
+**Ngữ cảnh:** Khách nói: “Chuyến huỷ rồi, hoàn vé hai mẹ con giúp tôi.” Đây mới là ý định ban đầu, **không phải xác nhận cuối cùng** để gọi `gui_yeu_cau_hoan_ve`.
+
+**AI nói nguyên văn (trước khi gửi):**
+
+> “Tôi có thể chuẩn bị yêu cầu hoàn vé cho đặt chỗ TRV-7Q2K. Trước khi gửi, vui lòng kiểm tra đúng hai hành khách, chính sách hoàn và các hậu quả. Theo thông tin hiện có, yêu cầu đã gửi không thể huỷ; quá trình xử lý có thể tới 90 ngày và phương thức hoàn có thể là tiền về phương thức thanh toán ban đầu hoặc voucher tuỳ trường hợp. Tôi **chưa gửi yêu cầu**. Bạn muốn tiếp tục xem bước xác nhận cuối cùng hay quay lại?”
+
+**Người dùng thấy:** Màn hình **Xem trước hoàn vé**, nhãn nổi bật `CHƯA GỬI`, mã đặt chỗ, hai hành khách, lý do hủy, chính sách, trạng thái tiền hoàn `chưa xác minh số tiền cụ thể` nếu dữ liệu thiếu. Có nút `Quay lại` và `Tiếp tục xác nhận`. Ở màn hình kế tiếp, hiển thị tóm tắt cuối, checkbox xác nhận hậu quả (mặc định bỏ chọn) và nút `Gửi yêu cầu hoàn vé` chỉ bật khi đã kiểm tra dữ liệu thiết yếu và người có thẩm quyền xác nhận rõ ràng. Checkbox không thay thế kiểm tra quyền của chủ đặt chỗ trong hệ thống thật.
+
+**Làm gì tiếp:** `tra_cuu_dat_cho` để đối chiếu thông tin; không gọi tool thay đổi trạng thái ở bước xem trước. Nếu thông tin thiếu/mâu thuẫn, yêu cầu bổ sung hoặc `chuyen_nhan_vien`. Chỉ sau xác nhận cuối hợp lệ mới cho phép gọi `gui_yeu_cau_hoan_ve` **một lần**; kết quả phải dựa trên phản hồi tool, không tự tuyên bố thành công.
+
+**Nếu lỗi đã xảy ra:**
+
+> “Xin lỗi, hệ thống đã gửi yêu cầu hoàn vé trước khi bạn xác nhận đầy đủ. Tôi không thể tự huỷ yêu cầu đã gửi. Tôi đã dừng các thao tác tiếp theo và sẽ chuyển hồ sơ cho nhân viên kiểm tra; việc chuyển hồ sơ không bảo đảm khôi phục vé. Tôi sẽ hiển thị mã yêu cầu và trạng thái thực tế nếu hệ thống cung cấp.”
+
+**Ai được báo, khi nào:** Ngay khi phát hiện lỗi, thông báo trên màn hình cho khách; gọi `chuyen_nhan_vien` ngay trong cùng luồng xử lý, chuyển mã đặt chỗ, danh sách hành khách, trạng thái tool và thời điểm phát hiện. Không tự hứa thời gian phản hồi của nhân viên khi chưa có SLA.
+
+**Quyết định:** Chọn **hỏi/xác nhận rõ trước khi gửi**, và **dừng + chuyển người** nếu đã gửi sai. Loại phương án tự gửi theo ý định vì tool không thể huỷ; loại phương án chỉ thêm lời cảnh báo nhưng vẫn cho AI tự gọi tool vì cảnh báo không ngăn được thao tác sai.
+
+**Loại lỗi:** Chủ yếu là **lỗi hệ thống** (AI/luồng sản phẩm coi ý định ban đầu là phê duyệt cuối). Không đổ lỗi cho người dùng. Lời nói phải thừa nhận trạng thái thật, còn biện pháp sửa phải đặt ở tầng quyền thực thi và trạng thái giao diện.
+
+**HAX/PAIR áp dụng:**
+- **HAX G10 — Scope services when in doubt:** tại nút `Tiếp tục xác nhận`, chưa được gọi tool gửi hoàn; hỏi lại khi chưa rõ hành khách hoặc lựa chọn.
+- **HAX G11 — Make clear why the system did what it did:** khu vực `Chính sách & hậu quả` nêu căn cứ và phân biệt `CHƯA GỬI` với `ĐÃ GỬI`.
+- **HAX G9 — Support efficient correction:** nút `Quay lại` cho sửa trước khi gửi; nếu đã gửi sai, cung cấp hồ sơ cho nhân viên thay vì nút hoàn tác giả.
+
+**Lỗi không thể cứu bằng câu chữ:** Một khi `gui_yeu_cau_hoan_ve` đã chạy thành công, lời xin lỗi không đảo ngược được yêu cầu. Cần **chốt chặn kỹ thuật**: tách preview/confirmation/submit, kiểm tra xác nhận ngay tại lớp thực thi, chống gửi lặp, và khóa các thao tác xung đột sau khi gửi.
+
+### S2 — Khách đổi ý sau khi yêu cầu hoàn vé đã gửi
+
+**Ngữ cảnh:** Khách nói: “Khoan, tôi đổi ý, cho hai mẹ con đi chuyến 7 giờ!” trong khi yêu cầu hoàn vé đã gửi. Không có tool `huy_hoan_ve`; chưa biết vé còn hợp lệ để đổi hay không.
+
+**AI nói nguyên văn:**
+
+> “Tôi hiểu bạn muốn đổi sang chuyến 07:00 cho cả hai mẹ con. Tuy nhiên, yêu cầu hoàn vé của đặt chỗ TRV-7Q2K **đã được gửi** và tôi không có khả năng huỷ yêu cầu đó. Tôi cũng chưa thể xác nhận vé còn đủ điều kiện đổi chuyến. Vì vậy tôi **sẽ không tự đổi vé**. Tôi có thể chuyển ngay hồ sơ và nguyện vọng mới cho nhân viên kiểm tra. Việc chuyển nhân viên không bảo đảm yêu cầu hoàn được rút lại hoặc vé được khôi phục.”
+
+**Người dùng thấy:** Trang `YÊU CẦU HOÀN ĐÃ GỬI` có trạng thái lấy từ tool/hồ sơ, cảnh báo `KHÔNG CÓ CHỨC NĂNG HOÀN TÁC`, nhu cầu mới `chuyến 07:00 cho 2 hành khách`, nút `Chuyển nhân viên` và `Xem trạng thái hồ sơ`. Nút `Đổi chuyến ngay` không xuất hiện hoặc bị khóa kèm lý do; không có nút `Huỷ yêu cầu` giả.
+
+**Làm gì tiếp:** Ngừng gọi `doi_chuyen_bay` và `giu_cho_chuyen_moi` cho đặt chỗ đang có xung đột trạng thái; chuyển nhân viên với lịch sử yêu cầu, mã đặt chỗ, hai hành khách, lựa chọn chuyến 07:00 và trạng thái hiện có. Nhân viên phải xác minh tính hợp lệ và khả năng xử lý ngoại lệ; AI không cam kết kết quả.
+
+**Ai được báo, khi nào:** Thông báo cho khách **ngay trong lượt phản hồi**; nếu khách đồng ý chuyển hoặc quy trình hỗ trợ sự cố đã được chấp thuận, gọi `chuyen_nhan_vien` ngay. Nhân viên nhận hồ sơ kèm mức ưu tiên theo chính sách nội bộ nếu có; không tự bịa SLA.
+
+**Quyết định:** Chọn **dừng và chuyển người**, đồng thời **trả lời kèm giới hạn**. Loại phương án hỏi thêm rồi tự đổi vì câu trả lời mới không làm xuất hiện quyền huỷ yêu cầu; loại phương án hứa hoàn tác vì không có tool hỗ trợ.
+
+**Loại lỗi:** Chủ yếu là **lỗi ngữ cảnh/trạng thái** nếu AI không nhận ra yêu cầu hoàn đã gửi; nếu AI nói đã huỷ hoặc vẫn tự đổi dù biết trạng thái thì đó là **lỗi hệ thống**. Cách nói phải làm rõ trạng thái đã xác nhận, tránh suy đoán; cách sửa phải dựa vào chặn tool và chuyển người.
+
+**HAX/PAIR áp dụng:**
+- **HAX G11 — Make clear why the system did what it did:** nhãn `ĐÃ GỬI` và câu giải thích vì sao không thể tự đổi chuyến.
+- **HAX G10 — Scope services when in doubt:** vô hiệu hóa `Đổi chuyến ngay` khi tính hợp lệ của vé chưa được xác minh.
+- **HAX G9 — Support efficient correction:** nút `Chuyển nhân viên` kèm bản tóm tắt hồ sơ, không bắt khách kể lại từ đầu.
+
+**Lỗi không thể cứu bằng câu chữ:** Không có tool rút yêu cầu hoàn đã gửi. Phải dùng **state guard** khóa hành động đổi chuyến khi refund đã submitted, hiển thị trạng thái đáng tin cậy, lưu nhật ký thao tác và chuyển nhân viên. Nếu trạng thái tool không rõ, hiển thị `Chưa xác minh`, không đoán là đã huỷ hay đã đổi thành công.
+
+### Quy tắc chung cho hai kịch bản
+
+- Tách rõ **ý định → xem trước → xác nhận cuối → thực thi → trạng thái từ tool**; không dùng câu “đồng ý” mơ hồ làm quyền thực thi.
+- Thông báo lỗi ngay khi phát hiện; thời gian xử lý của nhân viên và hoàn tiền chỉ được hiển thị khi có nguồn dữ liệu xác thực.
+- Prototype chỉ **mô phỏng** trạng thái và hành động; không có quyền hoàn tiền/đổi vé thật.
 
 ## §4. Mức tự chủ  (chặng 4)
 Với mỗi tool:
