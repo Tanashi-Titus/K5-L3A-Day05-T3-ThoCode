@@ -6,7 +6,7 @@
 |---|---|---|
 | Nguyễn Tuấn Dũng | 2A202603559 | Nhóm xác nhận |
 | Nguyễn Đức Minh | 2A202603633 | Nhóm xác nhận |
-| Phạm Đức Hồng Đức | 2A202603558 | Nhóm xác nhận |
+| Phạm Đức Hồng Đức | 2A202603558 | hoàn thành **chặng 5** và **chặng 6**. Nội dung : Hoàn thiện prototype S1/S2 ; bổ sung xử lý dữ liệu thiếu, gửi hoàn thất bại/mất phản hồi và chuyển nhân viên; biên soạn §5, xây dựng tiêu chí Pass/Fail §6.|
 | Giáp Mạnh Tuyên | 2A202603648 | Nhóm xác nhận |
 
 ## §1. Lát cắt & phạm vi
