@@ -8,7 +8,7 @@
     :root { color-scheme: light; font-family: 'Segoe UI', system-ui, sans-serif; color: #222923; background: #f5f2eb; }
     *, *::before, *::after { box-sizing: border-box; }
     body { margin: 0; }
-    button, input { font: inherit; }
+    button, input, select { font: inherit; }
     button { cursor: pointer; }
     button:disabled { cursor: not-allowed; }
     button:focus-visible, input:focus-visible { outline: 3px solid #3275df; outline-offset: 3px; }
@@ -37,6 +37,7 @@
     .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 16px; }
     .draft { color: #184b79; background: #e5f0fc; }
     .sent { color: #275d49; background: #e2f4eb; }
+    .uncertain { color: #633a0b; background: #fff4de; }
     .message { padding: 11px 14px; border-radius: 13px 13px 3px 13px; background: #234c62; color: white; width: fit-content; max-width: 95%; margin: 0 0 12px auto; }
     .reply { margin-bottom: 14px; line-height: 1.45; padding: 10px 12px; border-radius: 12px 12px 12px 3px; background: #f2efe8; }
     fieldset { padding: 0; margin: 0 0 12px; border: 0; }
@@ -68,6 +69,12 @@
     .notes dd { font-size: .85rem; font-weight: 400; color: #46574f; }
     .notes li { margin-bottom: 6px; }
     .notes .demo-note { margin-top: 8px; }
+    .test-controls { margin: 0 0 18px; padding: 12px 16px; background: #fff; border: 1px solid #ddd7cc; border-radius: 12px; }
+    summary { cursor: pointer; font-weight: 650; }
+    .test-fields { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
+    .test-fields label { display: grid; gap: 5px; font-size: .9rem; }
+    select { max-width: 100%; padding: 6px; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .78rem; line-height: 1.5; }
     [hidden] { display: none !important; }
     @media (max-width: 700px) {
       .wrap { width: calc(100% - 24px); }
@@ -89,9 +96,19 @@
     <div class="actions demo-controls" aria-label="Chọn ca demo">
       <button id="demo-refund" type="button" aria-pressed="true">S1 · Yêu cầu hoàn vé</button>
       <button id="demo-recovery" type="button" aria-pressed="false">S2 · Đổi ý sau khi gửi</button>
-      <button id="demo-ambiguous" type="button" aria-pressed="false">S5 · Xác nhận mơ hồ</button>
       <button id="demo-reset" type="button">Bắt đầu lại</button>
     </div>
+    <details class="test-controls">
+      <summary>Điều kiện mô phỏng & nhật ký kiểm tra</summary>
+      <p class="muted">Chỉ dành cho demo, không gọi dịch vụ thật. “Bắt đầu lại” tạo phiên thử mới và xóa nhật ký phiên cũ.</p>
+      <div class="test-fields">
+        <label>Hồ sơ đối soát<select id="mock-data"><option value="verified">Đủ dữ liệu dựng</option><option value="missing">Chưa xác minh tiền / nơi nhận / thời gian</option></select></label>
+        <label>Kết quả gửi hoàn<select id="mock-refund"><option value="accepted">Tiếp nhận thành công</option><option value="rejected">Từ chối, xác nhận chưa gửi</option><option value="unknown">Mất phản hồi, chưa rõ kết quả</option></select></label>
+        <label>Kết quả chuyển nhân viên<select id="mock-handoff"><option value="accepted">Tiếp nhận thành công</option><option value="rejected">Chưa chuyển được</option></select></label>
+      </div>
+      <div class="actions"><button type="button" id="expire-confirmation">Mô phỏng hết hạn xác nhận (5 phút)</button></div>
+      <pre id="tool-log" aria-label="Nhật ký tool mô phỏng"></pre>
+    </details>
     <div class="grid">
       <section class="card panel" aria-label="Trợ lý đặt chỗ">
       <div class="booking" aria-label="Thông tin đặt chỗ">
@@ -105,19 +122,6 @@
         </dl>
       </div>
         <div class="panel-head"><h2>Trợ lý đặt chỗ</h2><span class="badge draft" id="status" role="status">Chưa gửi yêu cầu</span></div>
-
-        <section id="ambiguous" aria-label="Xác nhận mơ hồ" hidden>
-          <p class="reply">Mình có thể giúp bạn xem chuyến thay thế hoặc chuẩn bị hoàn vé. Bạn muốn chọn cách nào?</p>
-          <div class="actions"><button id="send-ambiguous" type="button">Nhắn “Ừ, làm đi”</button></div>
-          <div id="clarification" hidden>
-            <p class="message">Ừ, làm đi.</p>
-            <p class="reply" id="clarification-reply" data-note="7" tabindex="-1">Bạn muốn hoàn vé hay đổi chuyến? Mình chưa gửi yêu cầu hoàn và chưa đổi vé.</p>
-            <div class="actions">
-              <button id="clarify-refund" type="button">Chọn hoàn vé</button>
-              <button id="clarify-change" type="button">Xem chuyến thay thế</button>
-            </div>
-          </div>
-        </section>
 
         <section id="preview" aria-label="Xem trước tiền hoàn">
           <p class="message">Chuyến hủy rồi, hoàn vé hai mẹ con giúp tôi.</p>
@@ -137,19 +141,22 @@
             <label class="person"><input type="checkbox" name="passenger" value="Nguyễn Minh An"> Nguyễn Minh An · Người lớn</label>
             <label class="person"><input type="checkbox" name="passenger" value="Nguyễn Gia Bình"> Nguyễn Gia Bình · Trẻ 5 tuổi</label>
           </fieldset>
-          <div class="facts">
+          <div class="facts" id="verified-refund">
             <strong>Hoàn toàn bộ tiền vé đã chọn</strong>
             <p class="muted">Theo chính sách Bay Mẫu · Phương thức thanh toán gốc · Tối đa 15 ngày làm việc kể từ khi tiếp nhận.</p>
-            <p class="muted">Hồ sơ hoàn mô phỏng vừa được đối soát. Số tiền theo vé đã chọn: <strong id="refund-total">Chưa chọn vé</strong>.</p>
+            <p class="muted">Dữ liệu giả bổ sung cho demo, mô phỏng hồ sơ đã đối soát. Số tiền theo vé đã chọn: <strong id="refund-total">Chưa chọn vé</strong>.</p>
           </div>
+          <div class="notice" id="missing-data" hidden><strong>Chưa đủ dữ liệu để gửi hoàn.</strong><p>Chưa xác minh số tiền, nơi nhận và thời gian. Không thể dùng xác nhận của khách để thay thế dữ liệu còn thiếu.</p><button type="button" class="link" id="missing-handoff">Nhờ nhân viên xác minh</button></div>
           <div class="notice"><strong>Yêu cầu đã gửi không thể hủy.</strong><p>Bạn vẫn có thể dừng ở bước này để xem chuyến thay thế.</p></div>
           <label class="confirm"><input type="checkbox" id="acknowledge" disabled> Tôi hiểu yêu cầu hoàn đã gửi không thể hủy.</label>
+          <p class="muted" style="margin-bottom: 12px">Xác nhận có hiệu lực tối đa 5 phút từ lần chọn hành khách gần nhất. Đổi người hoặc rời bước này sẽ cần xác nhận lại.</p>
           <div class="actions">
             <button class="primary" id="submit-refund" type="submit" disabled>Gửi yêu cầu hoàn</button>
             <button id="back-to-preview" type="button">Quay lại bản xem trước</button>
             <button id="leave-review" type="button">Xem chuyến thay thế</button>
           </div>
           <p id="expired" class="muted" role="status" hidden>Phiên xác nhận đã hết hạn. Vui lòng chọn lại hành khách. Yêu cầu hoàn chưa được gửi.</p>
+          <p id="refund-error" class="notice" role="status" hidden>Hệ thống mô phỏng từ chối và xác nhận chưa gửi yêu cầu. Vui lòng kiểm tra lại và xác nhận mới nếu muốn thử lại.</p>
         </form>
 
         <form id="flights" aria-label="Chuyến thay thế" hidden>
@@ -165,6 +172,7 @@
             <div class="facts" style="margin-top: 12px" data-note="5"><strong id="selected-flight"></strong><p class="muted">Nguyễn Minh An và Nguyễn Gia Bình · Chỗ còn theo dữ liệu mô phỏng.</p></div>
             <div class="notice" data-note="6"><strong>Đổi chuyến sẽ dùng lần đổi miễn phí duy nhất.</strong><p>Chỉ đổi sau khi bạn xác nhận chuyến và cả hai hành khách.</p></div>
             <label class="confirm"><input type="checkbox" id="confirm-change"> Tôi xác nhận đổi cả hai vé sang chuyến trên.</label>
+            <p class="muted" style="margin-bottom: 12px">Xác nhận có hiệu lực tối đa 5 phút. Đổi lựa chọn chuyến sẽ cần xác nhận lại.</p>
             <div class="actions"><button class="primary" id="submit-change" type="submit" disabled>Xác nhận đổi chuyến</button></div>
           </div>
           <p id="change-expired" class="muted" role="status" hidden>Phiên xác nhận đã hết hạn. Vui lòng xem lại chuyến trước khi xác nhận. Vé chưa được đổi.</p>
@@ -175,15 +183,15 @@
         </section>
 
         <section id="after-submit" aria-label="Yêu cầu đã gửi" hidden>
-          <div class="receipt" data-note="4"><strong>Yêu cầu hoàn đã gửi · BM 213</strong><p class="muted" id="submitted-passengers"></p><p class="muted">Trạng thái từ xác nhận tiếp nhận mô phỏng.</p></div>
+          <div class="receipt" data-note="4"><strong id="receipt-title">Yêu cầu hoàn đã gửi · BM 213</strong><p class="muted" id="submitted-passengers"></p><p class="muted" id="receipt-source"></p></div>
           <button class="link" type="button" id="change-mind">Không hoàn nữa, tôi muốn đổi chuyến</button>
           <div id="recovery" hidden>
-            <p class="message">Khoan, tôi đổi ý, cho hai mẹ con đi chuyến 7 giờ!</p>
-            <div class="notice" data-note="5"><strong>Yêu cầu đã gửi không thể hủy.</strong><p>Mình chưa thể xác nhận vé còn đổi được không. Nhân viên có thể kiểm tra chuyến BM 201 lúc 07:00 cho hai mẹ con. Việc chuyển hồ sơ không bảo đảm khôi phục vé.</p></div>
+            <p class="message" id="recovery-request">Khoan, tôi đổi ý, cho hai mẹ con đi chuyến 7 giờ!</p>
+            <div class="notice" data-note="5"><strong id="recovery-title">Yêu cầu đã gửi không thể hủy.</strong><p id="recovery-explanation">Mình chưa thể xác nhận vé còn đổi được không. Nhân viên có thể kiểm tra chuyến BM 201 lúc 07:00 cho hai mẹ con. Việc chuyển hồ sơ không bảo đảm khôi phục vé.</p><p>Đã khóa gửi lại, giữ chỗ và đổi chuyến. Không có chức năng hoàn tác.</p></div>
             <div class="actions" data-note="6"><button class="primary" type="button" id="handoff">Chuyển nhân viên</button></div>
-            <p id="handoff-status" role="status" class="facts" hidden>Đã chuyển yêu cầu hỗ trợ kèm mã đặt chỗ và trạng thái hoàn vé. Chưa có thời gian phản hồi dự kiến.</p>
           </div>
         </section>
+        <p id="handoff-status" role="status" class="facts" hidden></p>
       </section>
       <aside class="notes" aria-label="Ghi chú demo">
         <section class="card panel"><h2>Lời hứa với khách</h2><p class="muted" id="promise">Mình có thể xem chính sách hoàn và chuẩn bị yêu cầu. Chỉ gửi khi bạn xác nhận.</p></section>
@@ -200,9 +208,6 @@
     </div>
   </main>
   <script>
-    const ambiguous = document.querySelector('#ambiguous');
-    const sendAmbiguous = document.querySelector('#send-ambiguous');
-    const clarification = document.querySelector('#clarification');
     const preview = document.querySelector('#preview');
     const review = document.querySelector('#review');
     const travelers = [...review.querySelectorAll('[name=passenger]')];
@@ -222,8 +227,12 @@
     const handoff = document.querySelector('#handoff');
     const demoRefund = document.querySelector('#demo-refund');
     const demoRecovery = document.querySelector('#demo-recovery');
-    const demoAmbiguous = document.querySelector('#demo-ambiguous');
     const showNotes = document.querySelector('#show-notes');
+    const mockData = document.querySelector('#mock-data');
+    const mockRefund = document.querySelector('#mock-refund');
+    const mockHandoff = document.querySelector('#mock-handoff');
+    const missingHandoff = document.querySelector('#missing-handoff');
+    const handoffStatus = document.querySelector('#handoff-status');
     const reviewDuration = 5 * 60 * 1000;
     const demoPrices = [1_400_000, 1_080_000];
     const currency = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
@@ -233,38 +242,57 @@
     let changeExpiresAt = 0;
     let completed = false;
     let activeDemo = 'refund';
-    const demoNotes = {
-      refund: {
-        promise: 'Mình có thể xem chính sách hoàn và chuẩn bị yêu cầu. Chỉ gửi khi bạn xác nhận.',
-        first: 1,
-        captions: ['G11 · Nguồn chính sách và số tiền chưa xác minh.', 'G9 · Tách xem trước khỏi gửi và cho đổi hướng.', 'G16 · Cảnh báo không thể hủy trước khi gửi.']
-      },
-      recovery: {
-        promise: 'Mình báo đúng trạng thái đã gửi và chuyển hồ sơ nếu bạn cần nhân viên kiểm tra.',
-        first: 4,
-        captions: ['G11 · Trạng thái từ xác nhận tiếp nhận.', 'G10 · Dừng đổi khi chưa rõ vé còn hợp lệ.', 'G9 · Chuyển hồ sơ để nhân viên hỗ trợ.']
-      },
-      ambiguous: {
-        promise: 'Mình sẽ hỏi bạn muốn làm gì trước khi chuẩn bị yêu cầu hoàn hoặc đổi vé.',
-        first: 7,
-        captions: ['G10 · Hỏi rõ hành động trước khi thực hiện.']
-      },
-      change: {
-        promise: 'Mình tìm chuyến đủ chỗ cho cả hai. Chỉ đổi sang chuyến bạn xác nhận.',
-        first: 4,
-        captions: ['G10 · Hỏi khách chọn chuyến đủ chỗ.', 'G11 · Hiện chuyến và hành khách sẽ đổi.', 'G16 · Nêu việc dùng lượt đổi miễn phí.']
-      }
-    };
+    let refundState = 'draft';
+    let refundRecord = null;
+    let handoffDone = false;
+    let journal = [];
+    let confirmedFlight = '';
+
+    // Tool giả lập: ghi nhận lời gọi và phản hồi; không kết nối dịch vụ thật.
+    function mockTool(tool, input, result) {
+      journal.push({ tool, input, result });
+      document.querySelector('#tool-log').textContent = JSON.stringify(journal, null, 2);
+      return result;
+    }
+
+    function canAct() { return !completed && refundState === 'draft'; }
+
+    function requestHandoff() {
+      if (handoffDone) return;
+      const result = mockTool('chuyen_nhan_vien', {
+        booking: 'TRV-7Q2K',
+        passengers: travelers.map(person => person.value),
+        refund: refundRecord,
+        refundState,
+        reason: refundState === 'draft' ? 'Xác minh tiền, nơi nhận và thời gian hoàn' : 'Khách đổi ý / cần xác minh trạng thái hoàn',
+        newRequest: refundState === 'submitted' ? 'BM 201 · 07:00, 13/11/2026 · 2 hành khách' : null
+      }, { status: mockHandoff.value, caseId: mockHandoff.value === 'accepted' ? 'HT-DEMO-001' : null });
+      handoffDone = result.status === 'accepted';
+      handoff.disabled = handoffDone;
+      missingHandoff.disabled = handoffDone;
+      handoffStatus.textContent = handoffDone
+        ? `Đã chuyển hồ sơ ${result.caseId}, kèm đặt chỗ, hành khách, trạng thái hoàn và nhu cầu hiện tại. Chưa có thời gian phản hồi dự kiến. Việc chuyển không thay đổi trạng thái hoàn vé.`
+        : 'Chưa chuyển được hồ sơ. Bạn có thể bấm chuyển nhân viên để thử lại. Trạng thái hoàn vé giữ nguyên; chưa có thời gian phản hồi dự kiến.';
+      handoffStatus.hidden = false;
+    }
 
     function describeDemo(mode) {
       if (mode !== 'change') activeDemo = mode;
-      const { promise, first, captions } = demoNotes[mode];
-      demoRefund.setAttribute('aria-pressed', String(mode === 'refund'));
+      const refund = mode === 'refund';
+      demoRefund.setAttribute('aria-pressed', String(refund));
       demoRecovery.setAttribute('aria-pressed', String(mode === 'recovery'));
-      demoAmbiguous.setAttribute('aria-pressed', String(mode === 'ambiguous'));
-      document.querySelector('#promise').textContent = promise;
+      document.querySelector('#promise').textContent = refund
+        ? 'Mình có thể xem chính sách hoàn và chuẩn bị yêu cầu. Chỉ gửi khi bạn xác nhận.'
+        : mode === 'recovery'
+          ? 'Mình báo đúng trạng thái đã gửi và chuyển hồ sơ nếu bạn cần nhân viên kiểm tra.'
+          : 'Mình tìm chuyến đủ chỗ cho cả hai. Chỉ đổi sang chuyến bạn xác nhận.';
+      const captions = refund
+        ? ['G11 · Nguồn chính sách và số tiền chưa xác minh.', 'G9 · Tách xem trước khỏi gửi và cho đổi hướng.', 'G16 · Cảnh báo không thể hủy trước khi gửi.']
+        : mode === 'recovery'
+          ? ['G11 · Trạng thái từ xác nhận tiếp nhận.', 'G10 · Dừng đổi khi chưa rõ vé còn hợp lệ.', 'G9 · Chuyển hồ sơ để nhân viên hỗ trợ.']
+          : ['G10 · Hỏi khách chọn chuyến đủ chỗ.', 'G11 · Hiện chuyến và hành khách sẽ đổi.', 'G16 · Nêu việc dùng lượt đổi miễn phí.'];
       const list = document.querySelector('#annotation-list');
-      list.start = first;
+      list.start = refund ? 1 : 4;
       list.replaceChildren(...captions.map(caption => {
         const item = document.createElement('li');
         item.textContent = caption;
@@ -273,8 +301,13 @@
     }
 
     function updateControls() {
-      acknowledge.disabled = !travelers.some(traveler => traveler.checked);
-      submitRefund.disabled = acknowledge.disabled || !acknowledge.checked || completed;
+      const verified = mockData.value === 'verified';
+      mockData.disabled = !canAct();
+      mockRefund.disabled = !canAct();
+      document.querySelector('#verified-refund').hidden = !verified;
+      document.querySelector('#missing-data').hidden = verified;
+      acknowledge.disabled = !verified || !travelers.some(traveler => traveler.checked) || !canAct();
+      submitRefund.disabled = acknowledge.disabled || !acknowledge.checked || !expiresAt || Date.now() >= expiresAt;
       const amount = travelers.reduce((sum, traveler, i) => sum + (traveler.checked ? demoPrices[i] : 0), 0);
       document.querySelector('#refund-total').textContent = amount ? currency.format(amount) : 'Chưa chọn vé';
     }
@@ -293,6 +326,7 @@
 
     travelers.forEach(traveler => traveler.addEventListener('change', () => {
       expired.hidden = true;
+      document.querySelector('#refund-error').hidden = true;
       acknowledge.checked = false;
       window.clearTimeout(reviewTimer);
       expiresAt = travelers.some(person => person.checked) ? Date.now() + reviewDuration : 0;
@@ -300,42 +334,61 @@
       updateControls();
     }));
 
+    mockData.addEventListener('change', () => {
+      // Dữ liệu thay đổi làm mất hiệu lực xác nhận trước đó.
+      clearReview();
+      handoffDone = false;
+      missingHandoff.disabled = false;
+      handoff.disabled = false;
+      handoffStatus.hidden = true;
+    });
+
     acknowledge.addEventListener('change', updateControls);
     review.addEventListener('submit', event => {
       event.preventDefault();
-      if (completed || review.hidden || submitRefund.disabled) return;
+      if (!canAct() || review.hidden) return;
       if (Date.now() >= expiresAt) {
         expireReview();
         return;
       }
+      if (mockData.value !== 'verified' || !acknowledge.checked || !travelers.some(person => person.checked)) return;
       const passengers = travelers.filter(traveler => traveler.checked).map(traveler => traveler.value);
-      showReceipt(passengers);
-      changeMind.focus();
+      const payload = {
+        booking: 'TRV-7Q2K', flight: 'BM 213 · 19:00, 12/11/2026', passengers,
+        amount: travelers.reduce((sum, person, i) => sum + (person.checked ? demoPrices[i] : 0), 0),
+        method: 'Phương thức thanh toán gốc', timeframe: 'Tối đa 15 ngày làm việc',
+        consent: 'Xác nhận riêng, hiểu yêu cầu đã gửi không thể hủy'
+      };
+      // Khóa trước khi xử lý phản hồi; mất phản hồi không mở quyền gửi lại.
+      completed = true;
+      const result = mockTool('gui_yeu_cau_hoan_ve', payload, {
+        status: mockRefund.value, requestId: mockRefund.value === 'accepted' ? 'RF-DEMO-001' : null
+      });
+      if (result.status === 'rejected') {
+        completed = false;
+        clearReview();
+        document.querySelector('#refund-error').hidden = false;
+        return;
+      }
+      refundRecord = { ...payload, ...result };
+      showReceipt(passengers, result.status === 'unknown');
+      if (result.status === 'unknown') showRecovery();
+      else changeMind.focus();
     });
 
-    function openRefundReview() {
-      ambiguous.hidden = true;
+    document.querySelector('#review-refund').addEventListener('click', () => {
+      if (!canAct()) return;
       preview.hidden = true;
-      expired.hidden = true;
       review.hidden = false;
-      status.textContent = 'Chưa gửi yêu cầu';
       travelers[0].focus();
-    }
-
-    document.querySelector('#review-refund').addEventListener('click', openRefundReview);
-    document.querySelector('#clarify-refund').addEventListener('click', openRefundReview);
-    document.querySelector('#clarify-change').addEventListener('click', openFlights);
-    sendAmbiguous.addEventListener('click', () => {
-      sendAmbiguous.hidden = true;
-      clarification.hidden = false;
-      document.querySelector('#clarification-reply').focus();
     });
 
     function showPreview() {
+      if (!canAct()) return;
       describeDemo('refund');
       clearReview();
       expired.hidden = true;
-      ambiguous.hidden = true;
+      document.querySelector('#refund-error').hidden = true;
       review.hidden = true;
       flights.hidden = true;
       preview.hidden = false;
@@ -344,10 +397,10 @@
     }
 
     function openFlights() {
+      if (!canAct()) return;
       describeDemo('change');
       clearReview();
       expired.hidden = true;
-      ambiguous.hidden = true;
       preview.hidden = true;
       review.hidden = true;
       flights.reset();
@@ -362,6 +415,7 @@
     function resetChangeReview() {
       window.clearTimeout(changeTimer);
       changeExpiresAt = 0;
+      confirmedFlight = '';
       confirmChange.checked = false;
       submitChange.disabled = true;
       changeReview.hidden = true;
@@ -387,11 +441,13 @@
     }));
 
     reviewFlight.addEventListener('click', () => {
+      if (!canAct() || flights.hidden) return;
       const selected = flightChoices.find(choice => choice.checked);
       if (!selected) return;
       resetChangeReview();
       changeExpired.hidden = true;
       document.querySelector('#selected-flight').textContent = selected.value;
+      confirmedFlight = selected.value;
       changeReview.hidden = false;
       changeExpiresAt = Date.now() + reviewDuration;
       changeTimer = window.setTimeout(expireChangeReview, reviewDuration);
@@ -404,13 +460,19 @@
 
     flights.addEventListener('submit', event => {
       event.preventDefault();
-      if (completed || flights.hidden || changeReview.hidden || submitChange.disabled) return;
+      if (!canAct() || flights.hidden || changeReview.hidden || !confirmChange.checked) return;
       if (Date.now() >= changeExpiresAt) {
         expireChangeReview();
         return;
       }
+      const selected = flightChoices.find(choice => choice.checked);
+      if (!selected || selected.value !== confirmedFlight) return;
       completed = true;
-      document.querySelector('#changed-flight').textContent = document.querySelector('#selected-flight').textContent;
+      refundState = 'changed';
+      const result = mockTool('doi_chuyen_bay', {
+        booking: 'TRV-7Q2K', flight: confirmedFlight, passengers: travelers.map(person => person.value)
+      }, { status: 'accepted', flight: confirmedFlight });
+      document.querySelector('#changed-flight').textContent = result.flight;
       resetChangeReview();
       flights.hidden = true;
       status.textContent = 'Đã đổi vé';
@@ -418,16 +480,30 @@
       document.querySelector('#changed').hidden = false;
     });
 
-    function showReceipt(passengers) {
+    function showReceipt(passengers, unknown = false) {
       completed = true;
+      refundState = unknown ? 'unknown' : 'submitted';
+      describeDemo('recovery');
       clearReview();
+      resetChangeReview();
       review.hidden = true;
-      ambiguous.hidden = true;
       preview.hidden = true;
       flights.hidden = true;
       document.querySelector('#submitted-passengers').textContent = passengers.join(' · ');
-      status.textContent = 'Đã gửi yêu cầu';
-      status.classList.replace('draft', 'sent');
+      status.textContent = unknown ? 'Chưa rõ kết quả gửi' : 'Đã gửi yêu cầu';
+      document.querySelector('#receipt-title').textContent = unknown ? 'Chưa xác minh kết quả gửi · BM 213' : 'Yêu cầu hoàn đã gửi · BM 213';
+      document.querySelector('#receipt-source').textContent = unknown
+        ? 'Không nhận được phản hồi tiếp nhận. Không suy đoán đã gửi hoặc chưa gửi; không tự gửi lại.'
+        : `Mã ${refundRecord.requestId} · Trạng thái từ xác nhận tiếp nhận mô phỏng. Đây chưa phải xác nhận tiền đã về.`;
+      document.querySelector('#recovery-title').textContent = unknown ? 'Chưa rõ yêu cầu đã được tiếp nhận hay chưa.' : 'Yêu cầu đã gửi không thể hủy.';
+      document.querySelector('#recovery-request').hidden = unknown;
+      document.querySelector('#recovery-explanation').textContent = unknown
+        ? 'Mình dừng các thao tác tiếp theo để tránh gửi lặp hoặc đổi trên vé chưa rõ trạng thái. Nhân viên cần kiểm tra kết quả gửi. Việc chuyển hồ sơ không bảo đảm khôi phục vé.'
+        : 'Mình chưa thể xác nhận vé còn đổi được không. Nhân viên có thể kiểm tra chuyến BM 201 lúc 07:00 cho hai mẹ con. Việc chuyển hồ sơ không bảo đảm khôi phục vé.';
+      changeMind.hidden = unknown;
+      status.classList.toggle('draft', false);
+      status.classList.toggle('sent', !unknown);
+      status.classList.toggle('uncertain', unknown);
       afterSubmit.hidden = false;
     }
 
@@ -435,40 +511,42 @@
       describeDemo('recovery');
       changeMind.hidden = true;
       document.querySelector('#recovery').hidden = false;
+      if (refundState === 'unknown') document.querySelector('#promise').textContent = 'Mình chưa xác minh được kết quả gửi. Mình dừng gửi lại và đổi chuyến, chuyển hồ sơ khi bạn yêu cầu.';
       handoff.focus();
     }
 
     changeMind.addEventListener('click', showRecovery);
 
-    handoff.addEventListener('click', () => {
-      handoff.disabled = true;
-      document.querySelector('#handoff-status').hidden = false;
+    handoff.addEventListener('click', requestHandoff);
+    missingHandoff.addEventListener('click', requestHandoff);
+    document.querySelector('#expire-confirmation').addEventListener('click', () => {
+      if (!canAct()) return;
+      if (!review.hidden && expiresAt) expireReview();
+      if (!flights.hidden && changeExpiresAt) expireChangeReview();
     });
 
     function startDemo(mode) {
       completed = false;
+      refundState = 'draft';
+      refundRecord = null;
+      handoffDone = false;
+      journal = [];
+      mockTool('tra_cuu_dat_cho', { booking: 'TRV-7Q2K' }, { status: 'found', source: 'Dữ liệu dựng trong prototype' });
       resetChangeReview();
-      ambiguous.hidden = true;
       status.classList.replace('sent', 'draft');
+      status.classList.remove('uncertain');
+      status.classList.add('draft');
       afterSubmit.hidden = true;
       changeMind.hidden = false;
       document.querySelector('#recovery').hidden = true;
       document.querySelector('#handoff-status').hidden = true;
       document.querySelector('#changed').hidden = true;
       handoff.disabled = false;
+      missingHandoff.disabled = false;
       if (mode === 'refund') showPreview();
-      else if (mode === 'ambiguous') {
-        describeDemo('ambiguous');
-        clearReview();
-        preview.hidden = true;
-        review.hidden = true;
-        flights.hidden = true;
-        clarification.hidden = true;
-        sendAmbiguous.hidden = false;
-        ambiguous.hidden = false;
-        status.textContent = 'Chưa thực hiện';
-        sendAmbiguous.focus();
-      } else {
+      else {
+        refundRecord = { booking: 'TRV-7Q2K', passengers: travelers.map(person => person.value), requestId: 'RF-DEMO-001', status: 'accepted', source: 'Hồ sơ S2 dựng, đã gửi trước phiên demo' };
+        mockTool('tra_cuu_dat_cho', { booking: 'TRV-7Q2K' }, refundRecord);
         showReceipt(travelers.map(traveler => traveler.value));
         showRecovery();
       }
@@ -476,9 +554,8 @@
 
     demoRefund.addEventListener('click', () => startDemo('refund'));
     demoRecovery.addEventListener('click', () => startDemo('recovery'));
-    demoAmbiguous.addEventListener('click', () => startDemo('ambiguous'));
     document.querySelector('#demo-reset').addEventListener('click', () => startDemo(activeDemo));
-    describeDemo('refund');
+    startDemo('refund');
     document.querySelectorAll('[data-note]').forEach(element => {
       const marker = document.createElement('span');
       marker.className = 'marker';
